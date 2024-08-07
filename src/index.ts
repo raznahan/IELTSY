@@ -1,10 +1,14 @@
+
 import express from 'express';
-import mongoose from 'mongoose';
+import mongoose, {ConnectOptions } from 'mongoose';
 import config from './config';
-import bot from './bot';
+import './bot';
 
 const app = express();
 app.use(express.json());
+
+
+
 
 // Connect to MongoDB
 if (!config.mongoURI) {
