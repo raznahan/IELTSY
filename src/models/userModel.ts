@@ -1,20 +1,14 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose from 'mongoose';
 
-interface IUser extends Document {
-  telegramId: string;
-  freeUses: number;
-  referralPoints: number;
-  credits: number;
-  history: Array<{ date: Date; score: number }>;
-}
-
-const userSchema: Schema = new Schema({
-  telegramId: { type: String, required: true },
-  freeUses: { type: Number, default: 3 },
+const userSchema = new mongoose.Schema({
+  telegramId: { type: String, required: true, unique: true },
+  username: { type: String },
+  freeUsesLeft: { type: Number, default: 5 },
   referralPoints: { type: Number, default: 0 },
-  credits: { type: Number, default: 0 },
-  history: [{ date: Date, score: Number }],
+  paidUses: { type: Number, default: 0 },
+  totalUses: { type: Number, default: 0 },
 });
 
-const User = mongoose.model<IUser>('User', userSchema);
+const User = mongoose.model('User', userSchema);
+
 export default User;

@@ -1,34 +1,34 @@
+import dotenv from 'dotenv';
+dotenv.config();
 
 import express from 'express';
-import mongoose, {ConnectOptions } from 'mongoose';
+import mongoose from 'mongoose';
 import config from './config';
-import './bot';
+import './bot'; // Initialize the bot
+
+import userRoutes from './routes/userRoutes';
+import paymentRoutes from './routes/paymentRoutes';
 
 const app = express();
 app.use(express.json());
 
-
-
-
-// Connect to MongoDB
 if (!config.mongoURI) {
-  console.error('MongoDB connection string is not defined.');
-  process.exit(1); // Exit the process with an error code
+  throw new Error('MongoDB connection string is not defined.');
 }
 
 mongoose.connect(config.mongoURI).then(() => {
   console.log('MongoDB connected');
 }).catch(err => {
   console.error('MongoDB connection error:', err);
-  process.exit(1); // Exit the process with an error code
+  process.exit(1);
 });
 
-// Define a basic route
+app.use('/api/users', userRoutes);
+app.use('/api/payments', paymentRoutes);
+
 app.get('/', (req, res) => {
   res.send('Hello, IELTS Bot!');
 });
-
-// Start the Telegram bot (already started by requiring './bot')
 
 const PORT = config.port;
 app.listen(PORT, () => {
