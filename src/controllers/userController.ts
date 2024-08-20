@@ -5,6 +5,79 @@ import config from '../config';
 
 const REFERRAL_TO_POINT_RATIO = config.referralToPointRatio;
 
+// Get or create a user
+export const getUser = async (req: Request, res: Response) => {
+  const { telegramId, username } = req.body;
+  let user = await User.findOne({ telegramId });
+  if (!user) {
+    user = new User({ telegramId, username });
+    await user.save();
+  }
+  res.json(user);
+};
+
+// Submit an essay
+export const submitEssay = async (req: Request, res: Response) => {
+  const { telegramId, essay } = req.body;
+  let user = await User.findOne({ telegramId });
+
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  // Simulate essay correction and feedback
+  const feedback = `Your essay has been reviewed. Good job!`;
+  const score = Math.floor(Math.random() * (9 - 5 + 1)) + 5;
+
+  const newEssay = new Essay({
+    userId: user._id,
+    essay,
+    feedback,
+    score
+  });
+
+  await newEssay.save();
+
+  user.totalUses += 1;
+  await user.save();
+
+  res.json({ feedback, score });
+};
+
+export const submitPaidEssay = async (req: Request, res: Response) => {
+    const { telegramId, essay } = req.body;
+    let user = await User.findOne({ telegramId });
+  
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+  
+    if (user.totalPoints < 1) {
+      return res.status(400).json({ message: 'Insufficient points. Please add more credits.' });
+    }
+  
+    // Simulate essay correction and feedback
+    const feedback = `Your essay has been reviewed. Good job!`;
+    const score = Math.floor(Math.random() * (9 - 5 + 1)) + 5;
+  
+    const newEssay = new Essay({
+      userId: user._id,
+      essay,
+      feedback,
+      score,
+    });
+  
+    await newEssay.save();
+  
+    // Deduct points and update usage
+    user.totalPoints -= 1;
+    user.totalUses += 1;
+    user.paidUses += 1;
+    await user.save();
+  
+    res.json({ feedback, score });
+  };
+
 // Generate a referral code
 export const generateReferralCode = async (req: Request, res: Response) => {
   const { telegramId } = req.body;
@@ -55,36 +128,17 @@ export const applyReferralCode = async (req: Request, res: Response) => {
   res.json({ message: 'Referral code applied successfully.' });
 };
 
-// Submit essay using points
-export const submitPaidEssay = async (req: Request, res: Response) => {
-  const { telegramId, essay } = req.body;
+// Update AI data collection consent
+export const updateAIConsent = async (req: Request, res: Response) => {
+  const { telegramId, consent } = req.body;
   let user = await User.findOne({ telegramId });
 
   if (!user) {
     return res.status(404).json({ message: 'User not found' });
   }
 
-  if (user.totalPoints < 1) {
-    return res.status(400).json({ message: 'Insufficient points. Please add more credits.' });
-  }
-
-  // Simulate essay correction and feedback
-  const feedback = `Your essay has been reviewed. Good job!`;
-  const score = Math.floor(Math.random() * (9 - 5 + 1)) + 5;
-
-  const newEssay = new Essay({
-    userId: user._id,
-    essay,
-    feedback,
-    score
-  });
-
-  await newEssay.save();
-
-  user.totalPoints -= 1;
-  user.totalUses += 1;
-  user.paidUses += 1;
+  user.aiConsent = consent;
   await user.save();
 
-  res.json({ feedback, score });
+  res.json({ message: `AI training data collection consent updated to ${consent}` });
 };
