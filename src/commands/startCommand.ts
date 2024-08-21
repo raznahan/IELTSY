@@ -4,7 +4,7 @@ import User from '../models/userModel';
 export const startCommand = (bot: TelegramBot) => {
   bot.onText(/\/start(?: (.+))?/, async (msg, match) => {
     const userId = msg.chat.id.toString();
-    const referralCode = match[1]; // Capture the referral code if present
+    const referralCode = match && match[1] ? match[1] : null; // Safely capture the referral code if present
 
     let user = await User.findOne({ telegramId: userId });
 
