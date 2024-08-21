@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const userSchema = new mongoose.Schema({
   telegramId: { type: String, required: true, unique: true },
   username: { type: String },
-  referralCode: { type: String, unique: true },
+  referralCode: { type: String, unique: true, sparse: true },
   referredBy: { type: String },
   referralPoints: { type: Number, default: 0 },
   totalPoints: { type: Number, default: 0 },  // Total points including referral and purchased points
@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
   totalUses: { type: Number, default: 0 },
   creditBalance: { type: Number, default: 0 },
   aiConsent: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
   payments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }]  // Array of payments made by the user
 });
 
