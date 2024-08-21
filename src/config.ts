@@ -7,6 +7,7 @@ type Config = {
   mongoURI: string | undefined;
   telegramBotToken: string | undefined;
   gptApiKey: string | undefined;
+  botID:string | undefined;
   referralToPointRatio: number | 0,
 
 };
@@ -17,6 +18,7 @@ const configs: { [key: string]: Config } = {
     mongoURI: process.env.MONGO_URI,
     telegramBotToken: process.env.TELEGRAM_BOT_TOKEN,
     gptApiKey: process.env.GPT_API_KEY,
+    botID: process.env.BOTID,
     referralToPointRatio: parseInt(process.env.REFERRAL_TO_POINT_RATIO || '3', 10),
   },
   production: {
@@ -24,6 +26,7 @@ const configs: { [key: string]: Config } = {
     mongoURI: process.env.MONGO_URI,
     telegramBotToken: process.env.TELEGRAM_BOT_TOKEN,
     gptApiKey: process.env.GPT_API_KEY,
+    botID: process.env.BOTID,
     referralToPointRatio: parseInt(process.env.REFERRAL_TO_POINT_RATIO || '3', 10),
   },
 };

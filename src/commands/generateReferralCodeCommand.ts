@@ -1,5 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 import User from '../models/userModel';
+import config from '../config';
 
 export const generateReferralCodeCommand = (bot: TelegramBot) => {
   bot.onText(/\/generateReferralCode/, async (msg) => {
@@ -18,7 +19,7 @@ export const generateReferralCodeCommand = (bot: TelegramBot) => {
       await user.save();
     }
 
-    const referralLink = `https://t.me/your_bot_username?start=${user.referralCode}`;
+    const referralLink = `https://t.me/${config.botID}?start=${user.referralCode}`;
     bot.sendMessage(msg.chat.id, `Your referral code is: ${user.referralCode}\nShare this link to invite others: ${referralLink}`);
   });
 };
