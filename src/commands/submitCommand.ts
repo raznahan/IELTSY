@@ -15,7 +15,7 @@ export const submitCommand = (bot: TelegramBot) => {
         // Store the essay permanently in the database
         const newEssay = new Essay({
           userId,
-          essayText: msg.text,
+          essay: msg.text,
           feedback,
           score
         });
