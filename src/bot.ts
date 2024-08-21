@@ -15,11 +15,6 @@ startCommand(bot);
 submitCommand(bot);
 
 
-bot.onText(/\/start/, (msg) => {
-    console.log("received text");
-    bot.sendMessage(msg.chat.id, 'Welcome to IELTS Writing Bot! Use /submit to submit your essay.');
-});
-
 // Handle timeout events.
 bot.on('polling_error', (error) => {
     console.error('Fatal polling error:', error.message);
