@@ -1,13 +1,20 @@
 import TelegramBot from 'node-telegram-bot-api';
 import config from './config';
 
-console.log("token is: "+config.telegramBotToken);
+import { startCommand } from 'commands/startCommand';
+import { submitCommand } from './commands/submitCommand';
+import { submitPaidEssayCommand } from './commands/submitPaidEssayCommand';
 
 if (!config.telegramBotToken) {
     throw new Error('Telegram bot token is not defined.');
 }
 
 const bot = new TelegramBot(config.telegramBotToken, { polling: true });
+
+// Register command handlers
+startCommand(bot);
+submitCommand(bot);
+submitPaidEssayCommand(bot);
 
 
 bot.onText(/\/start/, (msg) => {
