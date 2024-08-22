@@ -4,7 +4,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!, // Ensure this is set correctly
 });
 
-export async function createThread(assistantId: string): Promise<string> {
+export async function createThread(): Promise<string> {
   const thread = await openai.beta.threads.create();
   console.log("Thread created with ID:", thread.id);
   return thread.id;
@@ -51,7 +51,7 @@ export async function runAssistantWithStreaming(
 }
 
 export async function getAssistantResponse(text: string, assistantId: string): Promise<string> {
-  const threadId = await createThread(assistantId);
+  const threadId = await createThread();
   await addMessageToThread(threadId, text);
 
   let completeResponse = '';
