@@ -12,7 +12,9 @@ const userSchema = new mongoose.Schema({
   totalUses: { type: Number, default: 0 },
   creditBalance: { type: Number, default: 0 },
   aiConsent: { type: Boolean, default: false },
+  threadId: { type: String, default: null },
   createdAt: { type: Date, default: Date.now },
+
   payments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }]  // Array of payments made by the user
 });
 

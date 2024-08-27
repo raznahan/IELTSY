@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { getUserThreadId, saveUserThreadId } from './userService';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!, // Ensure this is set correctly
@@ -10,6 +11,22 @@ export async function createThread(): Promise<string> {
   return thread.id;
 }
 
+export async function getOrCreateThreadId(userId: string): Promise<string> {
+  // Fetch the current thread ID associated with the user
+  let threadId = await getUserThreadId(userId);
+
+  if (!threadId) {
+    // If no thread ID exists for the user, create a new one
+    console.log(`No thread found for user ${userId}. Creating a new thread...`);
+    threadId = await createThread();
+
+    // Save the new thread ID in the user's record
+    await saveUserThreadId(userId, threadId);
+  }
+
+  return threadId;
+}
+
 export async function addMessageToThread(threadId: string, essayText: string): Promise<void> {
   const message = await openai.beta.threads.messages.create(threadId, {
     role: "user",
@@ -19,11 +36,10 @@ export async function addMessageToThread(threadId: string, essayText: string): P
 }
 
 export async function runAssistantWithStreaming(
-  threadId: string, 
-  assistantId: string, 
+  threadId: string,
+  assistantId: string,
   onDataReceived: (data: string) => void
 ): Promise<void> {
-  let completeResponse = '';
   const run = openai.beta.threads.runs.stream(threadId, {
     assistant_id: assistantId,
   });
@@ -50,9 +66,7 @@ export async function runAssistantWithStreaming(
   });
 }
 
-export async function getAssistantResponse(text: string, assistantId: string): Promise<string> {
-  const threadId = await createThread();
-  await addMessageToThread(threadId, text);
+export async function getAssistantResponse(threadId: string, assistantId: string): Promise<string> {
 
   let completeResponse = '';
   await runAssistantWithStreaming(threadId, assistantId, (chunk) => {
