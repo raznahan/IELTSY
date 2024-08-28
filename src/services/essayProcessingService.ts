@@ -42,9 +42,10 @@ export const processFile = async (
 export const saveEssay = async (userId: string, essayText: string, response: string) => {
     const newEssay = new Essay({
         userId,
-        essay: essayText,
+        essayText: essayText,
         feedback: response,
-        score: extractScore(response)
+        score: extractScore(response),
+        submittedAt: new Date()
     });
 
     await newEssay.save();
