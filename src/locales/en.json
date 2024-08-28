@@ -1,0 +1,11 @@
+{
+    "welcome_message_newUser": "Welcome to the IELTS Writing Bot! You were referred by {referralCode}.",
+    "welcome_message_existing" : "Welcome back to the IELTS Writing Bot!",
+    "submit_prompt": "Please submit your essay text or upload a file.",
+    "processing_essay": "⏳ Processing your essay...",
+    "incomplete_essay": "It seems like the text you submitted might not be a complete IELTS essay. Please ensure your submission meets the requirements.",
+    "error_processing": "There was an error processing your submission. Please try again.",
+    "error_message": "There was an error processing your submission. Please try again.",
+    "command_message": "Here are some commands you can use:\n- /submit: Submit your essay for review.\n- /generateReferralCode: Get your referral code to share with friends.\n- /applyReferralCode <code>: Apply a referral code to get bonus points.\n- /checkPoints: Check your current point balance.\n- /addCredits: Add credits to your account.\n- /updateAIConsent <yes/no>: Update your consent for AI training data collection.\n\nLet's get started by submitting your first essay!",
+    "referral_code_message": "Your referral code is: {referralCode}\nShare this link to invite others: {referralLink}"
+  }

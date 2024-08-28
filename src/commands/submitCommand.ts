@@ -2,6 +2,8 @@ import TelegramBot from 'node-telegram-bot-api';
 import { processFile, saveEssay } from '../services/essayProcessingService';
 import { getAssistantResponse, getOrCreateThreadId, addMessageToThread, createThread } from '../services/openAiService';
 import { saveUserThreadId } from '../services/userService';
+import { translate } from '../utils/i18n';
+import { getUserLanguage } from '../utils/userLanguage';
 
 function isLikelyCompleteEssay(text: string): boolean {
     const wordCount = text.split(/\s+/).length;
@@ -37,10 +39,13 @@ function escapeMarkdownV2(text: string): string {
         // Don't escape Markdown characters that are actually part of Markdown syntax.
         .replace(/\\([\*_])/g, '$1');
 }
+
 export const submitCommand = (bot: TelegramBot) => {
     bot.onText(/\/submit/, async (msg) => {
         const userId = msg.chat.id.toString();
-        bot.sendMessage(msg.chat.id, 'Please submit your essay text or upload a file.');
+        const userLanguage = await getUserLanguage(userId);
+
+        await bot.sendMessage(msg.chat.id, translate('submit_prompt', userLanguage));
         let textToProcess: string | undefined;
         let loadingMessage: TelegramBot.Message | undefined;
 
@@ -48,17 +53,17 @@ export const submitCommand = (bot: TelegramBot) => {
             try {
                 if (msg.text && !msg.text.startsWith('/')) {
                     if (isLikelyCompleteEssay(msg.text)) {
-                        loadingMessage = await bot.sendMessage(msg.chat.id, '⏳ Processing your essay...');
+                        loadingMessage = await bot.sendMessage(msg.chat.id, translate('processing_essay', userLanguage));
                         textToProcess = msg.text;
                     } else {
-                        bot.sendMessage(msg.chat.id, "It seems like the text you submitted might not be a complete IELTS essay. Please ensure your submission meets the requirements.");
+                        await bot.sendMessage(msg.chat.id, translate('incomplete_essay', userLanguage));
                         return;
                     }
                 } else if (msg.document) {
-                    loadingMessage = await bot.sendMessage(msg.chat.id, '⏳ Processing your file...');
+                    loadingMessage = await bot.sendMessage(msg.chat.id, translate('processing_essay', userLanguage));
                     textToProcess = await processFile(msg.document, bot, msg.chat.id);
                     if (!isLikelyCompleteEssay(textToProcess)) {
-                        bot.sendMessage(msg.chat.id, "It seems like the text you submitted might not be a complete IELTS essay. Please ensure your submission meets the requirements.");
+                        await bot.sendMessage(msg.chat.id, translate('incomplete_essay', userLanguage));
                         return;
                     }
                 }
@@ -108,13 +113,14 @@ export const submitCommand = (bot: TelegramBot) => {
                 }
             } catch (error) {
                 console.error('Error processing submission:', error);
+                const errorMessage = translate('error_processing', userLanguage);
                 if (loadingMessage) {
-                    await bot.editMessageText('There was an error processing your submission. Please try again.', {
+                    await bot.editMessageText(errorMessage, {
                         chat_id: msg.chat.id,
                         message_id: loadingMessage.message_id
                     });
                 } else {
-                    bot.sendMessage(msg.chat.id, 'There was an error processing your submission. Please try again.');
+                    await bot.sendMessage(msg.chat.id, errorMessage);
                 }
             }
         });

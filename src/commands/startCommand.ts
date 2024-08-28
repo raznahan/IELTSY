@@ -46,14 +46,13 @@ export const startCommand = (bot: TelegramBot) => {
       await user.save();
       console.log(`New user created with ID: ${userId}`);
       const welcomeMessage = translate('welcome_message_newUser', language, { referralCode: referralCode || 'no one' });
-      bot.sendMessage(msg.chat.id, welcomeMessage);
+      await bot.sendMessage(msg.chat.id, welcomeMessage);
     } else {
       console.log(`User with ID: ${userId} already exists.`);
-      bot.sendMessage(msg.chat.id, translate('welcome_message_existing', language));
+      await bot.sendMessage(msg.chat.id, translate('welcome_message_existing', language));
     }
-
     // Always send the commands message message to all users regardless of whether they're new or returning
-    bot.sendMessage(msg.chat.id, translate('command_message', language));
+    await bot.sendMessage(msg.chat.id, translate('command_message', language));
   });
 };
 
