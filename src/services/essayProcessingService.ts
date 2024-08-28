@@ -39,7 +39,7 @@ export const processFile = async (
       throw new Error('There was an error processing your file. Please try again.');
     }
   };
-const saveEssay = async (userId: string, essayText: string, response: string) => {
+export const saveEssay = async (userId: string, essayText: string, response: string) => {
     const newEssay = new Essay({
         userId,
         essay: essayText,

@@ -1,5 +1,5 @@
 import TelegramBot from 'node-telegram-bot-api';
-import { processFile } from '../services/essayProcessingService';
+import { processFile,saveEssay } from '../services/essayProcessingService';
 import { getAssistantResponse, getOrCreateThreadId, addMessageToThread, createThread } from '../services/openAiService';
 import { saveUserThreadId } from '../services/userService';
 
@@ -57,6 +57,10 @@ export const submitCommand = (bot: TelegramBot) => {
                 } else if (msg.document) {
                     loadingMessage = await bot.sendMessage(msg.chat.id, '⏳ Processing your file...');
                     textToProcess = await processFile(msg.document, bot, msg.chat.id);
+                    if (!isLikelyCompleteEssay(textToProcess)) {
+                        bot.sendMessage(msg.chat.id, "It seems like the text you submitted might not be a complete IELTS essay. Please ensure your submission meets the requirements.");
+                        return;
+                    }
                 }
 
                 if (textToProcess) {
@@ -68,6 +72,7 @@ export const submitCommand = (bot: TelegramBot) => {
                         // Try to add message and run assistant
                         await addMessageToThread(threadId, textToProcess);
                         completeResponse = await getAssistantResponse(threadId, assistantId);
+                        await saveEssay(userId,textToProcess,completeResponse);
                     } catch (error) {
                         if (error instanceof Error) {
                             if (error.message.includes('thread not found') || error.message.includes('expired thread')) {
