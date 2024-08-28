@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
   aiConsent: { type: Boolean, default: false },
   threadId: { type: String, default: null },
   createdAt: { type: Date, default: Date.now },
-
+  language: { type: String, default: 'en' }, // Default language
   payments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }]  // Array of payments made by the user
 });
 
