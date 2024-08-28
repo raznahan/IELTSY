@@ -1,5 +1,5 @@
 import TelegramBot from 'node-telegram-bot-api';
-import { processFile,saveEssay } from '../services/essayProcessingService';
+import { processFile, saveEssay } from '../services/essayProcessingService';
 import { getAssistantResponse, getOrCreateThreadId, addMessageToThread, createThread } from '../services/openAiService';
 import { saveUserThreadId } from '../services/userService';
 
@@ -71,8 +71,10 @@ export const submitCommand = (bot: TelegramBot) => {
                     try {
                         // Try to add message and run assistant
                         await addMessageToThread(threadId, textToProcess);
-                        completeResponse = await getAssistantResponse(threadId, assistantId);
-                        await saveEssay(userId,textToProcess,completeResponse);
+                        if (process.env.TEST_MODE)
+                            completeResponse = "TEST MODE"
+                        else completeResponse = await getAssistantResponse(threadId, assistantId);
+                        await saveEssay(userId, textToProcess, completeResponse);
                     } catch (error) {
                         if (error instanceof Error) {
                             if (error.message.includes('thread not found') || error.message.includes('expired thread')) {
