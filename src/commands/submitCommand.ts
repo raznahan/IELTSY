@@ -1,9 +1,13 @@
 import TelegramBot from 'node-telegram-bot-api';
-import { processFile, saveEssay } from '../services/essayProcessingService';
+import config from '../config';
+import User from '../models/userModel';
+import Essay from '../models/essayModel';
+import { processFile } from '../services/essayProcessingService';
 import { getAssistantResponse, getOrCreateThreadId, addMessageToThread, createThread } from '../services/openAiService';
 import { saveUserThreadId } from '../services/userService';
 import { translate } from '../utils/i18n';
 import { getUserLanguage } from '../utils/userLanguage';
+import { saveEssay } from '../services/essayProcessingService';
 
 function isLikelyCompleteEssay(text: string): boolean {
     const wordCount = text.split(/\s+/).length;
