@@ -7,5 +7,24 @@
     "error_processing": "There was an error processing your submission. Please try again.",
     "error_message": "There was an error processing your submission. Please try again.",
     "command_message": "Here are some commands you can use:\n- /submit: Submit your essay for review.\n- /generateReferralCode: Get your referral code to share with friends.\n- /applyReferralCode <code>: Apply a referral code to get bonus points.\n- /checkPoints: Check your current point balance.\n- /addCredits: Add credits to your account.\n- /updateAIConsent <yes/no>: Update your consent for AI training data collection.\n\nLet's get started by submitting your first essay!",
-    "referral_code_message": "Your referral code is: {referralCode}\nShare this link to invite others: {referralLink}"
-  }
+    "referral_code_message": "Your referral code is: {referralCode}\nShare this link to invite others: {referralLink}",
+    "COULD_NOT_IDENTIFY_USER": "Sorry, I couldn't identify you.",
+    "NO_ESSAYS_SUBMITTED": "You haven't submitted any essays yet.",
+    "HERE_ARE_YOUR_ESSAYS": "Here are your submitted essays.",
+    "ESSAY": "Essay",
+    "ERROR_FETCHING_ESSAYS": "Sorry, there was an error fetching your essays. Please try again later.",
+    "ESSAY_NOT_FOUND": "Sorry, I couldn't find that essay.",
+    "ORIGINAL_ESSAY": "Original Essay",
+    "SCORES": "Scores",
+    "TR": "Task Response",
+    "CC": "Coherence and Cohesion",
+    "LR": "Lexical Resource",
+    "GRA": "Grammatical Range and Accuracy",
+    "OVERALL_SCORE": "Overall Score",
+    "ERROR_FETCHING_ESSAY_DETAILS": "Sorry, there was an error fetching the essay details. Please try again later.",
+    "SELECT_ESSAY": "Select an essay to view details.",
+    "TAP_TO_EXPAND": "Tap to expand",
+    "EXPAND_ESSAY": "Expand Essay",
+    "FULL_ESSAY": "Full Essay",
+    "ERROR_EXPANDING_ESSAY": "Sorry, there was an error expanding the essay. Please try again."
+}

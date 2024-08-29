@@ -80,7 +80,7 @@ export const submitCommand = (bot: TelegramBot) => {
                     try {
                         // Try to add message and run assistant
                         await addMessageToThread(threadId, textToProcess);
-                        if (process.env.TEST_MODE)
+                        if (process.env.TEST_MODE == "true")
                             completeResponse = "TEST MODE"
                         else completeResponse = await getAssistantResponse(threadId, assistantId);
                         await saveEssay(userId, textToProcess, completeResponse);
