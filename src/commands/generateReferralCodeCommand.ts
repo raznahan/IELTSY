@@ -4,7 +4,7 @@ import config from '../config';
 import { translate } from '../utils/i18n';
 
 export const generateReferralCodeCommand = (bot: TelegramBot) => {
-  bot.onText(/\/generateReferralCode/, async (msg) => {
+  bot.onText(/\/generatereferralcode/, async (msg) => {
     const userId = msg.chat.id.toString();
     let user = await User.findOne({ telegramId: userId });
     const userLanguage = user?.language || 'en';

@@ -6,7 +6,7 @@
     "incomplete_essay": "It seems like the text you submitted might not be a complete IELTS essay. Please ensure your submission meets the requirements.",
     "error_processing": "There was an error processing your submission. Please try again.",
     "error_message": "There was an error processing your submission. Please try again.",
-    "command_message": "Here are some commands you can use:\n- /submit: Submit your essay for review.\n- /myessays: View your submitted essays.\n- /generateReferralCode: Get your referral code to share with friends.\n- /applyReferralCode <code>: Apply a referral code to get bonus points.\n- /checkPoints: Check your current point balance.\n- /addCredits: Add credits to your account.\n- /updateAIConsent <yes/no>: Update your consent for AI training data collection.\n\nLet's get started by submitting your first essay!",
+    "command_message": "Here are some commands you can use:\n- /submit: Submit your essay for review.\n- /myessays: View your submitted essays.\n- /generatereferralcode: Get your referral code to share with friends.\n- /applyReferralCode <code>: Apply a referral code to get bonus points.\n- /checkPoints: Check your current point balance.\n- /addCredits: Add credits to your account.\n- /updateAIConsent <yes/no>: Update your consent for AI training data collection.\n\nLet's get started by submitting your first essay!",
     "referral_code_message": "Your referral code is: {referralCode}\nShare this link to invite others: {referralLink}",
     "COULD_NOT_IDENTIFY_USER": "Sorry, I couldn't identify you.",
     "NO_ESSAYS_SUBMITTED": "You haven't submitted any essays yet.",
