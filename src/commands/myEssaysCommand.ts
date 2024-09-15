@@ -39,7 +39,7 @@ export const myEssaysCommand = (bot: TelegramBot) => {
 
       const keyboard = essays.map((essay, index) => [{
         text: `${translate('ESSAY', languageCode)} ${(page - 1) * itemsPerPage + index + 1} - ${essay.submittedAt.toLocaleDateString()}`,
-        callback_data: `essay:${essay._id}`
+        callback_data: `essay:${essay._id}:${page}`
       }]);
 
       // Add navigation buttons
@@ -111,7 +111,6 @@ export const myEssaysCommand = (bot: TelegramBot) => {
   });
 
   async function showExpandedEssay(bot: TelegramBot, chatId: number, messageId: number, essayId: string, currentPage: number, languageCode: string) {
-    console.log('Showing expanded essay:', essayId, 'Page:', currentPage); // Add this log
     const essay = await Essay.findById(essayId);
     if (!essay) {
       await bot.editMessageText(translate('ESSAY_NOT_FOUND', languageCode), {
@@ -126,11 +125,11 @@ ${translate('FULL_ESSAY', languageCode)}:
 ${essay.essayText}
 
 ${translate('SCORES', languageCode)}:
-${translate('TR', languageCode)}: ${essay.TR}
-${translate('CC', languageCode)}: ${essay.CC}
-${translate('LR', languageCode)}: ${essay.LR}
-${translate('GRA', languageCode)}: ${essay.GRA}
-${translate('OVERALL_SCORE', languageCode)}: ${essay.overallBandScore}
+${translate('TR', languageCode)}: ${essay.TR ?? 'N/A'}
+${translate('CC', languageCode)}: ${essay.CC ?? 'N/A'}
+${translate('LR', languageCode)}: ${essay.LR ?? 'N/A'}
+${translate('GRA', languageCode)}: ${essay.GRA ?? 'N/A'}
+${translate('OVERALL_SCORE', languageCode)}: ${essay.overallBandScore ?? 'N/A'}
   `;
 
     const keyboard = [
@@ -146,42 +145,48 @@ ${translate('OVERALL_SCORE', languageCode)}: ${essay.overallBandScore}
     });
   }
 
-  async function showEssayList(bot: TelegramBot, chatId: number, messageId: number, userId: string, page: number, languageCode: string) {
-    const itemsPerPage = 10;
-    const totalEssays = await Essay.countDocuments({ userId: userId.toString() });
-    const totalPages = Math.ceil(totalEssays / itemsPerPage);
+async function showEssayList(bot: TelegramBot, chatId: number, messageId: number, userId: string, page: number, languageCode: string) {
+  const itemsPerPage = 10;
+  const totalEssays = await Essay.countDocuments({ userId: userId.toString() });
+  const totalPages = Math.ceil(totalEssays / itemsPerPage);
 
-    const essays = await Essay.find({ userId: userId.toString() })
-      .sort({ submittedAt: -1 })
-      .skip((page - 1) * itemsPerPage)
-      .limit(itemsPerPage);
+  // Ensure page is within valid range
+  page = Math.max(1, Math.min(page, totalPages));
 
-    const keyboard = essays.map((essay, index) => [{
-      text: `${translate('ESSAY', languageCode)} ${(page - 1) * itemsPerPage + index + 1} - ${essay.submittedAt.toLocaleDateString()}`,
-      callback_data: `essay:${essay._id}:${page}`
-    }]);
+  const essays = await Essay.find({ userId: userId.toString() })
+    .sort({ submittedAt: -1 })
+    .skip((page - 1) * itemsPerPage)
+    .limit(itemsPerPage);
 
-    // Add navigation buttons
-    const navButtons = [];
-    if (page > 1) {
-      navButtons.push({ text: '⬅️ Previous', callback_data: `page:${page - 1}` });
-    }
-    if (page < totalPages) {
-      navButtons.push({ text: 'Next ➡️', callback_data: `page:${page + 1}` });
-    }
-    if (navButtons.length > 0) {
-      keyboard.push(navButtons);
-    }
+  console.log(`Fetched ${essays.length} essays for page ${page}`); // Add this log
 
-    const message = `${translate('HERE_ARE_YOUR_ESSAYS', languageCode)} (${translate('PAGE', languageCode)} ${page}/${totalPages})`;
-    await bot.editMessageText(message, {
-      chat_id: chatId,
-      message_id: messageId,
-      reply_markup: { inline_keyboard: keyboard }
-    });
+  const keyboard = essays.map((essay, index) => [{
+    text: `${translate('ESSAY', languageCode)} ${(page - 1) * itemsPerPage + index + 1} - ${essay.submittedAt.toLocaleDateString()}`,
+    callback_data: `essay:${essay._id}:${page}`
+  }]);
+
+  // Add navigation buttons
+  const navButtons = [];
+  if (page > 1) {
+    navButtons.push({ text: '⬅️ Previous', callback_data: `page:${page - 1}` });
+  }
+  if (page < totalPages) {
+    navButtons.push({ text: 'Next ➡️', callback_data: `page:${page + 1}` });
+  }
+  if (navButtons.length > 0) {
+    keyboard.push(navButtons);
   }
 
+  const message = `${translate('HERE_ARE_YOUR_ESSAYS', languageCode)} (${translate('PAGE', languageCode)} ${page}/${totalPages})`;
+  await bot.editMessageText(message, {
+    chat_id: chatId,
+    message_id: messageId,
+    reply_markup: { inline_keyboard: keyboard }
+  });
+}
+
   async function showEssayDetails(bot: TelegramBot, chatId: number, messageId: number, essayId: string, currentPage: number, languageCode: string) {
+    console.log('Showing details for essay:', essayId, 'Page:', currentPage); // Add this log
     const essay = await Essay.findById(essayId);
     if (!essay) {
       await bot.editMessageText(translate('ESSAY_NOT_FOUND', languageCode), {
@@ -190,6 +195,8 @@ ${translate('OVERALL_SCORE', languageCode)}: ${essay.overallBandScore}
       });
       return;
     }
+
+    console.log('Essay details:', JSON.stringify(essay, null, 2)); // Add this log
 
     const essayText = essay.essayText.length > 100 
       ? essay.essayText.substring(0, 100) + '...' 
@@ -200,11 +207,13 @@ ${translate('ORIGINAL_ESSAY', languageCode)}:
 ${essayText}
 
 ${translate('SCORES', languageCode)}:
-${translate('TR', languageCode)}: ${essay.TR}
-${translate('CC', languageCode)}: ${essay.CC}
-${translate('LR', languageCode)}: ${essay.LR}
-${translate('GRA', languageCode)}: ${essay.GRA}
-${translate('OVERALL_SCORE', languageCode)}: ${essay.overallBandScore}
+${translate('TR', languageCode)}: ${essay.TR ?? 'N/A'}
+${translate('CC', languageCode)}: ${essay.CC ?? 'N/A'}
+${translate('LR', languageCode)}: ${essay.LR ?? 'N/A'}
+${translate('GRA', languageCode)}: ${essay.GRA ?? 'N/A'}
+${translate('OVERALL_SCORE', languageCode)}: ${essay.overallBandScore ?? 'N/A'}
+
+Submitted: ${essay.submittedAt.toLocaleDateString()}
   `;
 
     const keyboard = [
@@ -215,7 +224,8 @@ ${translate('OVERALL_SCORE', languageCode)}: ${essay.overallBandScore}
     await bot.editMessageText(message, {
       chat_id: chatId,
       message_id: messageId,
-      reply_markup: { inline_keyboard: keyboard }
+      reply_markup: { inline_keyboard: keyboard },
+      parse_mode: 'Markdown'
     });
   }
 };
