@@ -28,5 +28,9 @@
     "FULL_ESSAY": "Full Essay",
     "ERROR_EXPANDING_ESSAY": "Sorry, there was an error expanding the essay. Please try again.",
     "BACK_TO_LIST": "Back to List",
-    "BACK_TO_DETAILS": "Back to Details"
+    "BACK_TO_DETAILS": "Back to Details",
+    "MILESTONE_OVERALL": "Congratulations! You've reached a new overall score of {score}!",
+    "SHARE_RESULTS": "Share Results",
+    "SHARE_OPTION": "Would you like to share your results?",
+    "SHARE_SUCCESS": "Results shared successfully!"
 }

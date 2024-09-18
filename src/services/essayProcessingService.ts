@@ -40,74 +40,71 @@ export const processFile = async (
     }
   };
 
-export const saveEssay = async (userId: string, essayText: string, aiResponse: string) => {
-    const essayType = parseEssayType(aiResponse);
-    const overallBandScore = parseOverallBandScore(aiResponse);
-    const criteriaScores = parseCriteriaScores(aiResponse);
+export const parseAIResponse = (completeResponse: string): { aiResponse: string, essayData: any } => {
+ 
+  // Find the start of the JSON block
+  const jsonStartMarker = '```json';
+  const jsonStartIndex = completeResponse.indexOf(jsonStartMarker);
+  
+  if (jsonStartIndex === -1) {
+    throw new Error('JSON data not found in AI response');
+  }
 
+  // Find the end of the JSON block
+  const jsonEndMarker = '```';
+  const jsonEndIndex = completeResponse.indexOf(jsonEndMarker, jsonStartIndex + jsonStartMarker.length);
+
+  if (jsonEndIndex === -1) {
+    throw new Error('End of JSON data not found in AI response');
+  }
+
+  // Extract the JSON string
+  const jsonString = completeResponse.substring(jsonStartIndex + jsonStartMarker.length, jsonEndIndex).trim();
+
+  // Extract the AI response (everything before the JSON block)
+  const aiResponse = completeResponse.substring(0, jsonStartIndex).trim();
+
+  try {
+    const essayData = JSON.parse(jsonString);
+    return { aiResponse, essayData };
+  } catch (error) {
+    console.error('Error parsing JSON from AI response:', error);
+    throw new Error('Failed to parse AI response data');
+  }
+};
+
+export const saveEssay = async (
+    userId: string, 
+    essayText: string, 
+    aiResponse: string, 
+    essayData: any
+) => {
     const newEssay = new Essay({
         userId,
         essayText,
         feedback: aiResponse,
-        essayType,
-        overallBandScore,
-        TR: criteriaScores.TR,
-        CC: criteriaScores.CC,
-        LR: criteriaScores.LR,
-        GRA: criteriaScores.GRA,
-        submittedAt: new Date()
+        essayType: essayData.essay_type,
+        overallBandScore: essayData.overall,
+        TR: essayData.TR,
+        CC: essayData.CC,
+        LR: essayData.LR,
+        GRA: essayData.GRA,
+        submittedAt: new Date(),
+        errors: essayData.errors
     });
 
     try {
         await newEssay.save();
         console.log('Essay saved successfully');
+        return newEssay;
     } catch (error) {
         console.error('Error saving essay:', error);
-        throw error; // Re-throw the error to be handled by the caller
+        throw error;
     }
 };
 
-function parseEssayType(aiResponse: string): string {
-    const match = aiResponse.match(/This is an IELTS (.+)/);
-    return match ? match[1] : 'Unknown';
-}
-
-function parseOverallBandScore(aiResponse: string): number {
-    const match = aiResponse.match(/Overall Band Score: (\d+(\.\d+)?)/);
-    return match ? parseFloat(match[1]) : 0;
-}
-
-function parseCriteriaScores(aiResponse: string): {
-    TR: number;
-    CC: number;
-    LR: number;
-    GRA: number;
-} {
-    const scores = {
-        TR: 0,
-        CC: 0,
-        LR: 0,
-        GRA: 0
-    };
-
-    const criteriaRegex = {
-        TR: /Task Response \(Band (\d+(\.\d+)?)\)/,
-        CC: /Coherence and Cohesion \(Band (\d+(\.\d+)?)\)/,
-        LR: /Lexical Resource \(Band (\d+(\.\d+)?)\)/,
-        GRA: /Grammatical Range and Accuracy \(Band (\d+(\.\d+)?)\)/
-    };
-
-    for (const [criterion, regex] of Object.entries(criteriaRegex)) {
-        const match = aiResponse.match(regex);
-        if (match) {
-            scores[criterion as keyof typeof scores] = parseFloat(match[1]);
-        }
-    }
-
-    return scores;
-}
-
-const extractScore = (text: string): number => {
-    const match = text.match(/Score:\s*(\d+)/);
-    return match ? parseInt(match[1], 10) : 0;
-};
+// Remove the following functions as they are no longer needed:
+// parseEssayType
+// parseOverallBandScore
+// parseCriteriaScores
+// extractScore

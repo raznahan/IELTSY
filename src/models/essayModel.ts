@@ -1,5 +1,13 @@
 import mongoose from 'mongoose';
 
+const errorSchema = new mongoose.Schema({
+  criterion: String,
+  error_type: String,
+  original_text: String,
+  suggested_correction: String,
+  explanation: String
+});
+
 const essaySchema = new mongoose.Schema({
   userId: { type: String, required: true },
   essayText: { type: String, required: true },
@@ -10,7 +18,8 @@ const essaySchema = new mongoose.Schema({
   TR: { type: Number },
   CC: { type: Number },
   LR: { type: Number },
-  GRA: { type: Number }
+  GRA: { type: Number },
+  errors: [errorSchema]
 });
 
 const Essay = mongoose.model('Essay', essaySchema);

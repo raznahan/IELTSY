@@ -17,6 +17,13 @@ const userSchema = new mongoose.Schema({
   language: { type: String, default: 'en' }, // Default language
   payments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }],  // Array of payments made by the user
   lastEssayMessageId: { type: Number },
+  targetScores: {
+    overall: { type: Number, default: 0 },
+    TR: { type: Number, default: 0 },
+    CC: { type: Number, default: 0 },
+    LR: { type: Number, default: 0 },
+    GRA: { type: Number, default: 0 },
+  },
 });
 
 const User = mongoose.model('User', userSchema);
