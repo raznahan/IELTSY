@@ -114,14 +114,6 @@ function closeOpenTags(text: string) {
 }
 
 
-function escapeMarkdownV2(text: string): string {
-    return text
-        // Escape characters that are used for MarkdownV2 formatting if they are not part of Markdown formatting.
-        .replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1')
-        // Don't escape Markdown characters that are actually part of Markdown syntax.
-        .replace(/\\([*_])/g, '$1');
-}
-
 function convertToTelegramMarkdown(text: string): string {
     // Maps to store placeholders and their content
     const placeholders: { [key: string]: string } = {};
@@ -183,27 +175,24 @@ function convertToTelegramMarkdown(text: string): string {
 
     return text;
 }
+async function sendAnalytics(bot: TelegramBot, chatId: number, userId: string, userLanguage: string) {
+    try {
+        const scoresOverTime = await getScoresOverTime(userId);
+        const scoreChart = await createChart(scoresOverTime, 'line', 'Scores Over Time');
+        await bot.sendPhoto(chatId, scoreChart);
 
+        const taskScores = await getTaskSpecificScores(userId);
+        const taskChart = await createChart(taskScores, 'bar', 'Task-Specific Scores');
+        await bot.sendPhoto(chatId, taskChart);
 
-
-
-
-
-function parseErrors(completeResponse: string): { [key: string]: string[] } {
-    const errorCategories = ['TR', 'CC', 'LR', 'GRA'];
-    const errors: { [key: string]: string[] } = {};
-
-    errorCategories.forEach(category => {
-        const regex = new RegExp(`${category}\\d+`, 'g');
-        const matches = completeResponse.match(regex);
-        if (matches) {
-            errors[category] = matches;
-        }
-    });
-
-    return errors;
+        const errorHeatmap = await getErrorHeatmap(userId);
+        const heatmapChart = await createChart(errorHeatmap, 'heatmap', 'Error Heatmap');
+        await bot.sendPhoto(chatId, heatmapChart);
+    } catch (error) {
+        console.error('Error sending analytics:', error);
+        await bot.sendMessage(chatId, translate('error_analytics', userLanguage));
+    }
 }
-
 export const submitCommand = (bot: TelegramBot) => {
     bot.onText(/\/submit/, async (msg) => {
         const userId = msg.chat.id.toString();
@@ -329,23 +318,4 @@ export const submitCommand = (bot: TelegramBot) => {
             }
         });
     });
-
-    async function sendAnalytics(bot: TelegramBot, chatId: number, userId: string, userLanguage: string) {
-        try {
-            const scoresOverTime = await getScoresOverTime(userId);
-            const scoreChart = await createChart(scoresOverTime, 'line', 'Scores Over Time');
-            await bot.sendPhoto(chatId, scoreChart);
-
-            const taskScores = await getTaskSpecificScores(userId);
-            const taskChart = await createChart(taskScores, 'bar', 'Task-Specific Scores');
-            await bot.sendPhoto(chatId, taskChart);
-
-            const errorHeatmap = await getErrorHeatmap(userId);
-            const heatmapChart = await createChart(errorHeatmap, 'heatmap', 'Error Heatmap');
-            await bot.sendPhoto(chatId, heatmapChart);
-        } catch (error) {
-            console.error('Error sending analytics:', error);
-            await bot.sendMessage(chatId, translate('error_analytics', userLanguage));
-        }
-    }
 };
