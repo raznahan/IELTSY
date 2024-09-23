@@ -125,41 +125,54 @@ function escapeMarkdownV2(text: string): string {
 function convertToTelegramMarkdown(text: string): string {
     // Maps to store placeholders and their content
     const placeholders: { [key: string]: string } = {};
-    let placeholderIndex = 0;
 
-    // Step 0: Convert headings (### Heading) to bold text
-    text = text.replace(/^### (.+)$/gm, (match, p1) => {
-        const placeholder = `HEADING_PLACEHOLDER_${placeholderIndex++}`;
-        placeholders[placeholder] = `*${p1.trim()}*`;
-        return placeholder;
-    });
+    // Function to generate a unique placeholder
+    function generatePlaceholder(): string {
+        return `PLACEHOLDER_${Math.random().toString(36).substr(2, 9)}`;
+    }
 
     // Step 1: Replace bold (**text**) with placeholders
     text = text.replace(/\*\*([\s\S]+?)\*\*/g, (match, p1) => {
-        const placeholder = `BOLD_PLACEHOLDER_${placeholderIndex++}`;
+        const placeholder = generatePlaceholder();
         placeholders[placeholder] = `*${p1}*`;
         return placeholder;
     });
 
     // Step 2: Replace italic (*text*) with placeholders
     text = text.replace(/\*([\s\S]+?)\*/g, (match, p1) => {
-        const placeholder = `ITALIC_PLACEHOLDER_${placeholderIndex++}`;
+        const placeholder = generatePlaceholder();
         placeholders[placeholder] = `_${p1}_`;
         return placeholder;
     });
 
     // Step 3: Escape special characters in the text (excluding placeholders)
     // Exclude asterisks (*) and underscores (_) since they are used for formatting
-    const specialChars = ['\\', '[', ']', '(', ')', '~', '`', '>', '+', '-', '=', '|', '{', '}', '.', '!'];
+    const specialChars = ['\\', '`', '[', ']', '(', ')', '~', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!'];
     const specialCharsRegex = new RegExp(`([${specialChars.map(c => '\\' + c).join('')}])`, 'g');
+
+    // Temporarily replace placeholders with tokens to protect them during escaping
+    const tokens: { [key: string]: string } = {};
+    for (const placeholder in placeholders) {
+        const token = generatePlaceholder();
+        tokens[token] = placeholder;
+        text = text.replace(new RegExp(placeholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), token);
+    }
+
+    // Escape special characters in the text
     text = text.replace(specialCharsRegex, '\\$1');
+
+    // Restore placeholders from tokens
+    for (const token in tokens) {
+        const placeholder = tokens[token];
+        text = text.replace(new RegExp(token, 'g'), placeholder);
+    }
 
     // Step 4: Replace placeholders with their formatted content
     for (const placeholder in placeholders) {
         const value = placeholders[placeholder];
         // Escape special characters in the value, excluding formatting markers (* and _)
-        const escapedValue = value.replace(/([\\\[\]()~`>#+\-=|{}.!])/g, '\\$1');
-        text = text.replace(placeholder, escapedValue);
+        const escapedValue = value.replace(/([\\`\[\]()~>#+\-=|{}.!])/g, '\\$1');
+        text = text.replace(new RegExp(placeholder.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), escapedValue);
     }
 
     // Step 5: Escape hyphens and plus signs at the start of lines
@@ -170,6 +183,7 @@ function convertToTelegramMarkdown(text: string): string {
 
     return text;
 }
+
 
 
 
@@ -272,13 +286,6 @@ export const submitCommand = (bot: TelegramBot) => {
                         // Generate and send charts
                         await sendAnalytics(bot, msg.chat.id, userId, userLanguage);
 
-                        // Add option to share results
-                        const keyboard = {
-                            inline_keyboard: [
-                                [{ text: translate('SHARE_RESULTS', userLanguage), callback_data: `share:${essay?._id ?? 'unknown'}` }]
-                            ]
-                        };
-                        await bot.sendMessage(msg.chat.id, translate('SHARE_OPTION', userLanguage), { reply_markup: keyboard });
                     } catch (error) {
                         if (error instanceof Error) {
                             if (error.message.includes('thread not found') || error.message.includes('expired thread')) {
@@ -321,27 +328,6 @@ export const submitCommand = (bot: TelegramBot) => {
                 }
             }
         });
-    });
-
-    // Handle share callback
-    bot.on('callback_query', async (query) => {
-        if (query.message?.chat.id) {
-            const userId = query.message.chat.id.toString();
-            const userLanguage = await getUserLanguage(userId);
-            if (query.data && query.data.startsWith('share:')) {
-                const essayId = query.data.split(':')[1];
-                const essay = await Essay.findById(essayId);
-                if (essay) {
-                    const shareMessage = `
-                        I just completed an IELTS essay!
-                        Overall Score: ${essay.overallBandScore}
-                        TR: ${essay.TR}, CC: ${essay.CC}, LR: ${essay.LR}, GRA: ${essay.GRA}
-                    `;
-                    await bot.answerCallbackQuery(query.id, { text: translate('SHARE_SUCCESS', userLanguage) });
-                    await bot.sendMessage(query.message?.chat.id, shareMessage);
-                }
-            }
-        }
     });
 
     async function sendAnalytics(bot: TelegramBot, chatId: number, userId: string, userLanguage: string) {
