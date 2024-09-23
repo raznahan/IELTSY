@@ -11,6 +11,12 @@ import { saveEssay, parseAIResponse } from '../services/essayProcessingService';
 import { getScoresOverTime, getTaskSpecificScores, getErrorHeatmap, checkMilestones } from '../services/analyticsService';
 import { createChart } from '../utils/chartGenerator'; // You'll need to implement this
 
+/**
+ * Checks if the given text is likely to be a complete essay based on word count,
+ * sentence count, and paragraph count.
+ * @param text The text to analyze
+ * @returns True if the text meets the criteria for a complete essay, false otherwise
+ */
 function isLikelyCompleteEssay(text: string): boolean {
     const wordCount = text.split(/\s+/).length;
     const sentenceCount = text.split(/[.!?]+/).length - 1;
@@ -19,6 +25,12 @@ function isLikelyCompleteEssay(text: string): boolean {
     return wordCount >= 200 && sentenceCount >= 4 && paragraphCount >= 1;
 }
 
+/**
+ * Splits a long message into smaller chunks for Telegram, preserving Markdown formatting.
+ * @param text The text to split
+ * @param maxLength Maximum length of each chunk (default: 4096 characters)
+ * @returns An array of message chunks
+ */
 function splitMessage(text: string, maxLength: number = 4096): string[] {
     const messages: string[] = [];
     let position = 0;
@@ -54,6 +66,11 @@ function splitMessage(text: string, maxLength: number = 4096): string[] {
     return messages;
 }
 
+/**
+ * Finds the index of the last open formatting tag in the text. so the message is not cut off in the middle of a tag when sent in Telegram.
+ * @param text The text to analyze
+ * @returns The index of the last open tag, or -1 if no open tags are found
+ */
 function findLastOpenTagIndex(text: string): number {
     const formattingChars = ['*', '_', '~', '`'];
     const openTagsStack: { char: string; index: number }[] = [];
@@ -80,6 +97,11 @@ function findLastOpenTagIndex(text: string): number {
     }
 }
 
+/**
+ * Closes any open formatting tags at the end of the text.
+ * @param text The text to process
+ * @returns An object containing the adjusted text with closed tags and any unclosed tags
+ */
 function closeOpenTags(text: string) {
     const formattingChars = ['*', '_', '~', '`'];
     const openTagsStack: { char: string }[] = [];
@@ -113,7 +135,11 @@ function closeOpenTags(text: string) {
     return { adjustedChunk: adjustedText.join(''), unclosedTags };
 }
 
-
+/**
+ * Converts OpenAI-flavored Markdown to Telegram-compatible Markdown.
+ * @param text The text to convert
+ * @returns The converted text with Telegram-compatible Markdown
+ */
 function convertToTelegramMarkdown(text: string): string {
     // Maps to store placeholders and their content
     const placeholders: { [key: string]: string } = {};
@@ -175,6 +201,14 @@ function convertToTelegramMarkdown(text: string): string {
 
     return text;
 }
+
+/**
+ * Generates and sends analytics charts to the user based on their essay submissions and scores.
+ * @param bot The Telegram bot instance
+ * @param chatId The chat ID to send the analytics to
+ * @param userId The user ID for fetching analytics data
+ * @param userLanguage The user's preferred language for messages
+ */
 async function sendAnalytics(bot: TelegramBot, chatId: number, userId: string, userLanguage: string) {
     try {
         const scoresOverTime = await getScoresOverTime(userId);
@@ -193,6 +227,11 @@ async function sendAnalytics(bot: TelegramBot, chatId: number, userId: string, u
         await bot.sendMessage(chatId, translate('error_analytics', userLanguage));
     }
 }
+
+/**
+ * Handles the /submit command for essay submission and evaluation.
+ * @param bot The Telegram bot instance
+ */
 export const submitCommand = (bot: TelegramBot) => {
     bot.onText(/\/submit/, async (msg) => {
         const userId = msg.chat.id.toString();
@@ -203,9 +242,12 @@ export const submitCommand = (bot: TelegramBot) => {
         let loadingMessage: TelegramBot.Message | undefined;
         let responseSent = false;
 
+        // Listen for the user's response (essay submission)
         bot.once('message', async (msg) => {
             try {
+                // Check if the submitted content is text or a document
                 if (msg.text && !msg.text.startsWith('/')) {
+                    // Process text submission
                     if (isLikelyCompleteEssay(msg.text)) {
                         loadingMessage = await bot.sendMessage(msg.chat.id, translate('processing_essay', userLanguage));
                         textToProcess = msg.text;
@@ -214,6 +256,7 @@ export const submitCommand = (bot: TelegramBot) => {
                         return;
                     }
                 } else if (msg.document) {
+                    // Process document submission
                     loadingMessage = await bot.sendMessage(msg.chat.id, translate('processing_essay', userLanguage));
                     textToProcess = await processFile(msg.document, bot, msg.chat.id);
                     if (!isLikelyCompleteEssay(textToProcess)) {
@@ -223,41 +266,42 @@ export const submitCommand = (bot: TelegramBot) => {
                 }
 
                 if (textToProcess) {
+                    // Process the essay using OpenAI assistant
                     const assistantId = process.env.OPENAI_ASSISTANT_ID!;
-                    let threadId = await getOrCreateThreadId(userId); // Function to get existing thread or create a new one if necessary
+                    let threadId = await getOrCreateThreadId(userId);
                     let completeResponse;
                     let essay;
                     let overallBandScore;
 
                     try {
-                        // Try to add message and run assistant
+                        // Add message to thread and get assistant response
                         await addMessageToThread(threadId, textToProcess);
                         if (process.env.TEST_MODE == "true")
                             completeResponse = "TEST MODE"
-                        else completeResponse = await getAssistantResponse(threadId, assistantId);
+                        else
+                            completeResponse = await getAssistantResponse(threadId, assistantId);
 
                         console.log("completeResponse: ", completeResponse);
-                        // Parse the AI response
+                        
+                        // Parse the AI response and save the essay
                         const { aiResponse, essayData } = parseAIResponse(completeResponse);
-
                         essay = await saveEssay(userId, textToProcess, aiResponse, essayData);
                         if (!essay) {
                             throw new Error('Failed to save essay');
                         }
 
-                        // Extract overall band score from essayData
                         overallBandScore = essayData.overall;
 
-                        // Check for milestones
+                        // Check for milestones and send milestone messages
                         const milestoneMessages = await checkMilestones(userId, overallBandScore, userLanguage);
                         if ((milestoneMessages ?? []).length > 0) {
                             await bot.sendMessage(msg.chat.id, milestoneMessages!.join('\n'));
                         }
 
+                        // Format and send the AI response
                         const escapedResponse = convertToTelegramMarkdown(aiResponse);
                         const messageParts = splitMessage(escapedResponse);
 
-                        // Send all parts of the response
                         for (let i = 0; i < messageParts.length; i++) {
                             if (i === 0 && loadingMessage) {
                                 await bot.editMessageText(messageParts[i], {
@@ -271,34 +315,35 @@ export const submitCommand = (bot: TelegramBot) => {
                         }
                         responseSent = true;
 
-
-                        // Generate and send charts
+                        // Generate and send analytics charts
                         await sendAnalytics(bot, msg.chat.id, userId, userLanguage);
 
                     } catch (error) {
+                        // Handle errors, including expired threads
                         if (error instanceof Error) {
                             if (error.message.includes('thread not found') || error.message.includes('expired thread')) {
                                 // If thread is invalid, create a new thread and retry
                                 threadId = await createThread();
-                                await saveUserThreadId(userId, threadId); // Save new threadId to database or state
+                                await saveUserThreadId(userId, threadId);
                                 await addMessageToThread(threadId, textToProcess);
                                 completeResponse = await getAssistantResponse(threadId, assistantId);
                             } else {
-                                throw error; // Re-throw if it's a different error
+                                throw error;
                             }
                         } else {
                             console.error('Unexpected error type:', error);
-                            throw error; // Re-throw the unexpected error
+                            throw error;
                         }
                     }
 
-                    // Check for milestones
+                    // Check for milestones again (in case of retry)
                     const milestoneMessages = await checkMilestones(userId, overallBandScore, userLanguage);
                     if ((milestoneMessages ?? []).length > 0) {
                         await bot.sendMessage(msg.chat.id, milestoneMessages!.join('\n'));
                     }
                 }
             } catch (error) {
+                // Handle and report any errors during processing
                 console.error('Error processing submission:', error);
                 const errorMessage = translate('error_processing', userLanguage);
 
