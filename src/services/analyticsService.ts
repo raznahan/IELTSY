@@ -3,15 +3,28 @@ import User from '../models/userModel';
 import { translate } from '../utils/i18n';
 
 export async function getScoresOverTime(userId: string) {
-  const essays = await Essay.find({ userId }).sort('submittedAt');
+  const essays = await Essay.find({ 
+    userId, 
+    overallBandScore: { $exists: true, $ne: null, $gt: 0 } 
+  }).sort('submittedAt');
+
   return essays.map(essay => ({
     date: essay.submittedAt,
     score: essay.overallBandScore
   }));
 }
 
-export async function getTaskSpecificScores(userId: string) {
-  const essays = await Essay.find({ userId }).sort('-submittedAt').limit(5);
+export async function getTaskSpecificScoresOverTime(userId: string) {
+  const essays = await Essay.find({ 
+    userId,
+    $and: [
+      { TR: { $exists: true, $ne: null, $gt: 0 } },
+      { CC: { $exists: true, $ne: null, $gt: 0 } },
+      { LR: { $exists: true, $ne: null, $gt: 0 } },
+      { GRA: { $exists: true, $ne: null, $gt: 0 } }
+    ]
+  }).sort('submittedAt');
+
   return essays.map(essay => ({
     date: essay.submittedAt,
     TR: essay.TR,
@@ -19,6 +32,44 @@ export async function getTaskSpecificScores(userId: string) {
     LR: essay.LR,
     GRA: essay.GRA
   }));
+}
+
+export async function getComparativeAnalysis(userId: string) {
+  const user = await User.findOne({ telegramId: userId });
+  if (!user || !user.targetScores) {
+    return null;
+  }
+
+  const latestEssay = await Essay.findOne({ userId }).sort('-submittedAt');
+  if (!latestEssay) {
+    return null;
+  }
+
+  return {
+    labels: ['TR', 'CC', 'LR', 'GRA', 'Overall'],
+    datasets: [
+      {
+        label: 'Target Scores',
+        data: [
+          user.targetScores.TR,
+          user.targetScores.CC,
+          user.targetScores.LR,
+          user.targetScores.GRA,
+          user.targetScores.overall
+        ]
+      },
+      {
+        label: 'Latest Scores',
+        data: [
+          latestEssay.TR,
+          latestEssay.CC,
+          latestEssay.LR,
+          latestEssay.GRA,
+          latestEssay.overallBandScore
+        ]
+      }
+    ]
+  };
 }
 
 export async function getErrorHeatmap(userId: string) {

@@ -5,7 +5,12 @@ import config from './config';
 import { startCommand } from './commands/startCommand';
 import { submitCommand } from './commands/submitCommand';
 import { generateReferralCodeCommand } from './commands/generateReferralCodeCommand';
-import { myEssaysCommand } from './commands/myEssaysCommand';
+import { setupMyEssaysCommand } from './commands/myEssaysCommand';
+import { mainMenuCommand } from './commands/mainMenuCommand'; 
+import { setupSettingsCommand } from './commands/settingsCommand';
+import { setupAnalyticsCommand } from './commands/analyticsCommand';
+import { setupReferralCommand } from './commands/referralCommand';
+import { setupHelpCommand } from './commands/helpCommand';
 
 // Ensure the Telegram bot token is defined in the config
 if (!config.telegramBotToken) {
@@ -16,11 +21,15 @@ if (!config.telegramBotToken) {
 const bot = new TelegramBot(config.telegramBotToken, { polling: true });
 
 // Register command handlers
-// These functions likely set up event listeners for specific commands
 startCommand(bot);
 submitCommand(bot);
 generateReferralCodeCommand(bot);
-myEssaysCommand(bot);
+setupMyEssaysCommand(bot);
+mainMenuCommand(bot);
+setupSettingsCommand(bot);
+setupAnalyticsCommand(bot);
+setupReferralCommand(bot);
+setupHelpCommand(bot);
 
 // Handle polling errors
 // This is crucial for maintaining the bot's connection and debugging issues

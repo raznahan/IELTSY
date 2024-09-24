@@ -5,9 +5,7 @@ import { saveUserThreadId } from '../services/userService';
 import { translate } from '../utils/i18n';
 import { getUserLanguage } from '../utils/userLanguage';
 import { saveEssay, parseAIResponse } from '../services/essayProcessingService';
-import { getScoresOverTime, getTaskSpecificScores, getErrorHeatmap, checkMilestones } from '../services/analyticsService';
-import { createChart } from '../utils/chartGenerator'; // You'll need to implement this
-
+import { checkMilestones } from '../services/analyticsService';
 /**
  * Checks if the given text is likely to be a complete essay based on word count,
  * sentence count, and paragraph count.
@@ -199,31 +197,6 @@ function convertToTelegramMarkdown(text: string): string {
     return text;
 }
 
-/**
- * Generates and sends analytics charts to the user based on their essay submissions and scores.
- * @param bot The Telegram bot instance
- * @param chatId The chat ID to send the analytics to
- * @param userId The user ID for fetching analytics data
- * @param userLanguage The user's preferred language for messages
- */
-async function sendAnalytics(bot: TelegramBot, chatId: number, userId: string, userLanguage: string) {
-    try {
-        const scoresOverTime = await getScoresOverTime(userId);
-        const scoreChart = await createChart(scoresOverTime, 'line', 'Scores Over Time');
-        await bot.sendPhoto(chatId, scoreChart);
-
-        const taskScores = await getTaskSpecificScores(userId);
-        const taskChart = await createChart(taskScores, 'bar', 'Task-Specific Scores');
-        await bot.sendPhoto(chatId, taskChart);
-
-        const errorHeatmap = await getErrorHeatmap(userId);
-        const heatmapChart = await createChart(errorHeatmap, 'heatmap', 'Error Heatmap');
-        await bot.sendPhoto(chatId, heatmapChart);
-    } catch (error) {
-        console.error('Error sending analytics:', error);
-        await bot.sendMessage(chatId, translate('error_analytics', userLanguage));
-    }
-}
 
 /**
  * Handles the /submit command for essay submission and evaluation.
@@ -311,9 +284,6 @@ export const submitCommand = (bot: TelegramBot) => {
                             }
                         }
                         responseSent = true;
-
-                        // Generate and send analytics charts
-                        await sendAnalytics(bot, msg.chat.id, userId, userLanguage);
 
                     } catch (error) {
                         // Handle errors, including expired threads

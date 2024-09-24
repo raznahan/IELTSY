@@ -1,60 +1,59 @@
 import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 
-const width = 400;
-const height = 300;
-const chartCallback = (ChartJS: any) => {
-    ChartJS.defaults.responsive = true;
-    ChartJS.defaults.maintainAspectRatio = false;
-};
-const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, chartCallback });
+export async function createChart(data: any[], type: 'line', title: string): Promise<Buffer> {
+    const width = 800;
+    const height = 400;
+    const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height });
 
-export async function createChart(data: any, type: string, title: string) {
-    let configuration;
-
-    if (type === 'heatmap') {
-        // Special handling for heatmap data
-        configuration = {
-            type: 'bar', // or another suitable chart type for heatmap representation
-            data: {
-                labels: Object.keys(data),
-                datasets: Object.entries(data).map(([category, errors]: [string, any]) => ({
-                    label: category,
-                    data: [errors.length],
-                    backgroundColor: getColorForCategory(category),
-                })),
+    const configuration: any = {
+        type: type,
+        data: {
+            labels: data.map(item => item.date.toLocaleDateString()),
+            datasets: []
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 0,
+                    max: 9,
+                    ticks: {
+                        stepSize: 0.5
+                    }
+                }
             },
-            options: {
-                // Add appropriate options for heatmap-like representation
+            plugins: {
+                title: {
+                    display: true,
+                    text: title
+                }
             }
-        };
-    } else {
-        // Existing configuration for other chart types
-        configuration = {
-            type: type,
-            data: {
-                labels: data.map((d: any) => d.date),
-                datasets: [{
-                    label: title,
-                    data: data.map((d: any) => d.score),
-                    fill: false,
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
-                }]
-            }
-        };
+        }
+    };
+
+    if (type === 'line' && data[0].hasOwnProperty('score')) {
+        // Overall Band Score chart
+        configuration.data.datasets.push({
+            label: 'Overall Band Score',
+            data: data.map(item => item.score),
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        });
+    } else if (type === 'line' && data[0].hasOwnProperty('TR')) {
+        // Task-specific Scores chart
+        const tasks = ['TR', 'CC', 'LR', 'GRA'];
+        const colors = ['rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 206, 86)', 'rgb(75, 192, 192)'];
+        
+        tasks.forEach((task, index) => {
+            configuration.data.datasets.push({
+                label: task,
+                data: data.map(item => item[task]),
+                borderColor: colors[index],
+                tension: 0.1
+            });
+        });
     }
 
-    const image = await chartJSNodeCanvas.renderToBuffer(configuration as any);
+    const image = await chartJSNodeCanvas.renderToBuffer(configuration);
     return image;
-}
-
-function getColorForCategory(category: string): string {
-    // Return a color based on the category
-    const colors = {
-        TR: 'rgba(255, 99, 132, 0.5)',
-        CC: 'rgba(54, 162, 235, 0.5)',
-        LR: 'rgba(255, 206, 86, 0.5)',
-        GRA: 'rgba(75, 192, 192, 0.5)',
-    };
-    return colors[category as keyof typeof colors] || 'rgba(0, 0, 0, 0.5)';
 }

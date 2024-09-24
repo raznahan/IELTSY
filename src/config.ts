@@ -9,7 +9,7 @@ type Config = {
   gptApiKey: string | undefined;
   botID:string | undefined;
   referralToPointRatio: number | 0,
-
+  botUsername: string | undefined;
 };
 
 const configs: { [key: string]: Config } = {
@@ -20,6 +20,7 @@ const configs: { [key: string]: Config } = {
     gptApiKey: process.env.GPT_API_KEY,
     botID: process.env.BOTID,
     referralToPointRatio: parseInt(process.env.REFERRAL_TO_POINT_RATIO || '3', 10),
+    botUsername: process.env.BOTID,
   },
   production: {
     port: process.env.PORT || 3000,
@@ -28,6 +29,7 @@ const configs: { [key: string]: Config } = {
     gptApiKey: process.env.GPT_API_KEY,
     botID: process.env.BOTID,
     referralToPointRatio: parseInt(process.env.REFERRAL_TO_POINT_RATIO || '3', 10),
+    botUsername: process.env.BOT_USERNAME,
   },
 };
 

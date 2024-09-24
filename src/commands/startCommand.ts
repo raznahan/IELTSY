@@ -1,6 +1,8 @@
 import TelegramBot from 'node-telegram-bot-api';
 import User from '../models/userModel';
 import { translate } from '../utils/i18n';
+import { getUserLanguage } from '../utils/userLanguage';
+import { sendMainMenu } from './mainMenuCommand';
 
 // This command handles the /start command for the Telegram bot
 export const startCommand = (bot: TelegramBot) => {
@@ -14,7 +16,7 @@ export const startCommand = (bot: TelegramBot) => {
 
     // Check if the user already exists in the database
     let user = await User.findOne({ telegramId: userId });
-    const language = user?.language || 'en'; // Default to English if language not set
+    const language = await getUserLanguage(userId); // Use the new function to get the language
 
     if (!user) {
       // New user - create an entry in the database
@@ -55,10 +57,11 @@ export const startCommand = (bot: TelegramBot) => {
     } else {
       console.log(`User with ID: ${userId} already exists.`);
       // Send welcome back message to existing users
-      await bot.sendMessage(msg.chat.id, translate('welcome_message_existing', language));
+      const welcomeBackMessage = translate('welcome_message_existing', language);
+      await bot.sendMessage(msg.chat.id, welcomeBackMessage);
     }
-    // Always send the commands message to all users regardless of whether they're new or returning
-    await bot.sendMessage(msg.chat.id, translate('command_message', language));
+    // Send the main menu without the redundant command list
+    await sendMainMenu(bot, msg.chat.id, userId);
   });
 };
 
