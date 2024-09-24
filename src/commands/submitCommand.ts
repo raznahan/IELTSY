@@ -1,7 +1,4 @@
 import TelegramBot from 'node-telegram-bot-api';
-import config from '../config';
-import User from '../models/userModel';
-import Essay from '../models/essayModel';
 import { processFile } from '../services/essayProcessingService';
 import { getAssistantResponse, getOrCreateThreadId, addMessageToThread, createThread } from '../services/openAiService';
 import { saveUserThreadId } from '../services/userService';
